@@ -1,0 +1,16 @@
+[Unit]
+Description=Glimpse
+
+[Service]
+Type=notify
+ExecStart=/usr/lib/glimpse/Worker
+
+Restart=always
+RestartSec=5
+
+StandardInput=null
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
