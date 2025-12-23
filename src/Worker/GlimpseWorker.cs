@@ -3,18 +3,12 @@ namespace Worker;
 public class GlimpseWorker : BackgroundService
 {
     private readonly ILogger<GlimpseWorker> _logger;
-    // Placeholder config. need to load them from somewhere
-    private readonly int _fetchInterval = 60000;
-    private readonly int _maxAttempts = 3;
-    private readonly int _maxConcurrency = 3;
-    private readonly int _timeoutSeconds = 5;
-    private readonly string _apiKey = "demo";
-    private readonly string[] _symbols = { "AAPL.US", "TSLA.US", "VTI.US", "foo", "AMZN.US", "BTC-USD.CC" };
-    private readonly TimeSpan _retryDelay = TimeSpan.FromSeconds(1);
+    private readonly GlimpseConfig _config;
 
-    public GlimpseWorker(ILogger<GlimpseWorker> logger)
+    public GlimpseWorker(ILogger<GlimpseWorker> logger, GlimpseConfig config)
     {
         _logger = logger;
+        _config = config;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -22,24 +16,24 @@ public class GlimpseWorker : BackgroundService
         var http = new HttpClient(new SocketsHttpHandler
         {
             PooledConnectionLifetime = TimeSpan.FromMinutes(10),
-            MaxConnectionsPerServer = _maxConcurrency,
+            MaxConnectionsPerServer = _config.MaxConcurrency,
         })
         {
-            Timeout = TimeSpan.FromSeconds(_timeoutSeconds)
+            Timeout = TimeSpan.FromSeconds(_config.TimeoutSeconds)
         };
 
-        var client = new EodhdClient(http, _apiKey);
-        var semaphore = new SemaphoreSlim(_maxConcurrency);
+        var client = new EodhdClient(http, _config.ApiKey);
+        var semaphore = new SemaphoreSlim(_config.MaxConcurrency);
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var tasks = _symbols.Select(async symbol =>
+            var tasks = _config.Symbols.Select(async symbol =>
             {
                 await semaphore.WaitAsync(stoppingToken);
 
                 try
                 {
-                    string json = await client.GetRealtimeWithRetryAsync(symbol, _retryDelay, _maxAttempts, stoppingToken);
+                    string json = await client.GetRealtimeWithRetryAsync(symbol, _config.RetryDelaySeconds, _config.MaxAttempts, stoppingToken);
                     ProcessJson(json);
                 }
                 catch (Exception) when (!stoppingToken.IsCancellationRequested)
@@ -53,7 +47,7 @@ public class GlimpseWorker : BackgroundService
             }).ToArray();
 
             await Task.WhenAll(tasks);
-            await Task.Delay(_fetchInterval, stoppingToken);
+            await Task.Delay(_config.FetchInterval, stoppingToken);
         }
     }
 

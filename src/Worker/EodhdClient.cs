@@ -12,9 +12,9 @@ sealed class EodhdClient
     /// <summary>
     /// Adds retry logic on top of GetRealtimeAsycn
     /// </summary>
-    public async Task<String> GetRealtimeWithRetryAsync(string symbol, TimeSpan initialDelay, int maxRetries, CancellationToken ct)
+    public async Task<String> GetRealtimeWithRetryAsync(string symbol, int initialDelay, int maxRetries, CancellationToken ct)
     {
-        TimeSpan delay = initialDelay;
+        TimeSpan delay = TimeSpan.FromSeconds(initialDelay);
 
         for (int attempt = 0; attempt <= maxRetries + 1; attempt++)
         {
