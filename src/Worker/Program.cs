@@ -9,7 +9,7 @@ var configuration = new ConfigurationBuilder()
     .Build();
 
 var glimpseConfig = configuration.Get<GlimpseConfig>()
-    ?? throw new InvalidOperationException("Failed to load ~/.config/glimpse/glimpse-config.json. Make sure it exists!");
+    ?? throw new InvalidOperationException($"Failed to load {userConfigPath}. Make sure it exists!");
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddSingleton<GlimpseConfig>(glimpseConfig);
