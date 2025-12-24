@@ -12,11 +12,11 @@ sealed class EodhdClient
     /// <summary>
     /// Adds retry logic on top of GetRealtimeAsycn
     /// </summary>
-    public async Task<String> GetRealtimeWithRetryAsync(string symbol, int initialDelay, int maxRetries, CancellationToken ct)
+    public async Task<String> GetRealtimeWithRetryAsync(string symbol, int initialDelay, int maxAttempts, CancellationToken ct)
     {
         TimeSpan delay = TimeSpan.FromSeconds(initialDelay);
 
-        for (int attempt = 0; attempt <= maxRetries + 1; attempt++)
+        for (int attempt = 0; attempt <= maxAttempts; attempt++)
         {
             try
             {
@@ -24,7 +24,7 @@ sealed class EodhdClient
             }
             catch (Exception) when (!ct.IsCancellationRequested)
             {
-                if (attempt == maxRetries)
+                if (attempt == maxAttempts)
                     throw;
 
                 Console.WriteLine($"Retry#{attempt}: waiting for {delay.TotalSeconds} seconds");
