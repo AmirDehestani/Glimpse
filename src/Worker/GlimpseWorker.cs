@@ -33,8 +33,8 @@ public class GlimpseWorker : BackgroundService
 
                 try
                 {
-                    string json = await client.GetRealtimeWithRetryAsync(symbol, _config.RetryDelaySeconds, _config.MaxAttempts, stoppingToken);
-                    ProcessJson(json);
+                    Quote quote = await client.GetRealtimeWithRetryAsync(symbol, _config.RetryDelaySeconds, _config.MaxAttempts, stoppingToken);
+                    ProcessQuote(quote);
                 }
                 catch (Exception) when (!stoppingToken.IsCancellationRequested)
                 {
@@ -55,11 +55,11 @@ public class GlimpseWorker : BackgroundService
     /// <summary>
     /// Dummy method. To be replaced with actual implementation
     /// </summary>
-    private void ProcessJson(string json)
+    private void ProcessQuote(Quote quote)
     {
         if (_logger.IsEnabled(LogLevel.Information))
         {
-            _logger.LogInformation("Result: {resJson}", json);
+            _logger.LogInformation("Result: {quote}", quote);
         }
     }
 }
