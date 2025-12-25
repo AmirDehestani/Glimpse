@@ -1,3 +1,6 @@
+using System.Net.Http.Json;
+using Processor;
+
 sealed class EodhdClient
 {
     private readonly HttpClient _http;
@@ -10,13 +13,13 @@ sealed class EodhdClient
     }
 
     /// <summary>
-    /// Adds retry logic on top of GetRealtimeAsycn
+    /// Adds retry logic on top of GetRealtimeAsync
     /// </summary>
-    public async Task<String> GetRealtimeWithRetryAsync(string symbol, int initialDelay, int maxRetries, CancellationToken ct)
+    public async Task<RawQuote> GetRealtimeWithRetryAsync(string symbol, int initialDelay, int maxAttempts, CancellationToken ct)
     {
         TimeSpan delay = TimeSpan.FromSeconds(initialDelay);
 
-        for (int attempt = 0; attempt <= maxRetries + 1; attempt++)
+        for (int attempt = 0; attempt <= maxAttempts; attempt++)
         {
             try
             {
@@ -24,7 +27,7 @@ sealed class EodhdClient
             }
             catch (Exception) when (!ct.IsCancellationRequested)
             {
-                if (attempt == maxRetries)
+                if (attempt == maxAttempts)
                     throw;
 
                 Console.WriteLine($"Retry#{attempt}: waiting for {delay.TotalSeconds} seconds");
@@ -40,9 +43,14 @@ sealed class EodhdClient
     /// <summary>
     /// Fetches raw JSON of real-time data for the given symbol.
     /// </summary>
-    private async Task<string> GetRealtimeAsync(string symbol, CancellationToken ct)
+    private async Task<RawQuote> GetRealtimeAsync(string symbol, CancellationToken ct)
     {
         var url = $"https://eodhd.com/api/real-time/{symbol}?api_token={_apiKey}&fmt=json";
-        return await _http.GetStringAsync(url, ct);
+        var quote = await _http.GetFromJsonAsync<RawQuote>(url, ct);
+
+        if (quote == null)
+            throw new HttpRequestException("EODHD returned an empty or invalid response");
+
+        return quote;
     }
 }
