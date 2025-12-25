@@ -1,5 +1,7 @@
 namespace Worker;
 
+using Processor;
+
 public class GlimpseWorker : BackgroundService
 {
     private readonly ILogger<GlimpseWorker> _logger;
@@ -33,12 +35,13 @@ public class GlimpseWorker : BackgroundService
 
                 try
                 {
-                    Quote quote = await client.GetRealtimeWithRetryAsync(symbol, _config.RetryDelaySeconds, _config.MaxAttempts, stoppingToken);
-                    ProcessQuote(quote);
+                    RawQuote quote = await client.GetRealtimeWithRetryAsync(symbol.Code, _config.RetryDelaySeconds, _config.MaxAttempts, stoppingToken);
+                    var processedQuote = QuoteProcessor.processQuote(quote);
+                    _logger.LogInformation("{processedQuote}", processedQuote);
                 }
                 catch (Exception) when (!stoppingToken.IsCancellationRequested)
                 {
-                    _logger.LogError("Failed to get real-time data for symbol {symbol}", symbol);
+                    _logger.LogError("Failed to get real-time data for symbol {symbol}", symbol.Code);
                 }
                 finally
                 {
@@ -48,18 +51,6 @@ public class GlimpseWorker : BackgroundService
 
             await Task.WhenAll(tasks);
             await Task.Delay(_config.FetchInterval, stoppingToken);
-        }
-    }
-
-
-    /// <summary>
-    /// Dummy method. To be replaced with actual implementation
-    /// </summary>
-    private void ProcessQuote(Quote quote)
-    {
-        if (_logger.IsEnabled(LogLevel.Information))
-        {
-            _logger.LogInformation("Result: {quote}", quote);
         }
     }
 }
