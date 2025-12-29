@@ -39,9 +39,10 @@ public class GlimpseWorker : BackgroundService
                     var processedQuote = QuoteProcessor.processQuote(quote);
                     _logger.LogInformation("{processedQuote}", processedQuote);
                 }
-                catch (Exception) when (!stoppingToken.IsCancellationRequested)
+                catch (Exception e) when (!stoppingToken.IsCancellationRequested)
                 {
                     _logger.LogError("Failed to get real-time data for symbol {symbol}", symbol.Code);
+                    _logger.LogError(e.Message);
                 }
                 finally
                 {

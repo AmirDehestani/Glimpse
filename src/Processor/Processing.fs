@@ -1,5 +1,6 @@
 namespace Processor
 
+
 module QuoteProcessor =
 
     // TODO: get real exchange rate dynamically
@@ -10,15 +11,16 @@ module QuoteProcessor =
         | USD -> exchangeRate * price
         | CAD -> price
 
-    let processQuote (quote: RawQuote) =
-        let currency = quote.Currency |> Option.defaultValue CAD
-        let price = getPriceCad quote.Close currency
-        let updatedAt = System.DateTime.Now
+    let processQuote (quote: RawQuote) : ProcessedQuote =
+        let price =
+            let currency = quote.Currency |> Option.defaultValue CAD
+            getPriceCad quote.Close currency
 
-        let processedQuote: ProcessedQuote =
+        let processedQuote =
             { Symbol = quote.Code
               Price = price
               PercentageChange = quote.Change_p
-              UpdatedAt = updatedAt }
+              UpdatedAt = System.DateTime.Now }
 
+        Serializer.updateQuoteOnFile processedQuote
         processedQuote

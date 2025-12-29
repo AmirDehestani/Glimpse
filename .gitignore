@@ -3,3 +3,4 @@ bin/
 *.nupkg
 packages/
 .env
+quotes.json
